@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule Comparison — Week of 2026-05-25</title>
+<style>
+  :root {
+    --grid-bg: #fafafa;
+    --row-line: #e5e7eb;
+    --col-line: #d1d5db;
+    --header-bg: #f3f4f6;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --hour-px: 48px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--row-line);
+    background: var(--header-bg);
+  }
+  header h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  header .stats { margin-top: 12px; display: flex; gap: 24px; font-size: 13px; }
+  header .stats > div { color: var(--muted); }
+  header .stats > div strong { color: var(--text); }
+  main { padding: 16px 24px 80px; }
+  section.week-block {
+    margin-bottom: 32px;
+  }
+  section.week-block > h2 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .grid-wrap {
+    border: 1px solid var(--col-line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--grid-bg);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 56px repeat(7, 1fr);
+    position: relative;
+  }
+  .grid .day-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--col-line);
+    border-left: 1px solid var(--col-line);
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .grid .day-header.weekend { background: #fef3c7; }
+  .grid .day-header .date { display: block; color: var(--muted); font-weight: 400; margin-top: 2px; }
+  .grid .corner { background: var(--header-bg); border-bottom: 1px solid var(--col-line); }
+  .grid .hour-label {
+    padding: 2px 6px 0 0;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    height: var(--hour-px);
+    border-top: 1px dashed var(--row-line);
+  }
+  .grid .day-col {
+    position: relative;
+    border-left: 1px solid var(--col-line);
+    height: calc(var(--hour-px) * 16);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--hour-px) - 1px),
+      var(--row-line) calc(var(--hour-px) - 1px),
+      var(--row-line) var(--hour-px)
+    );
+  }
+  .shift {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    border-radius: 4px;
+    padding: 3px 5px;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #fff;
+    overflow: hidden;
+    cursor: default;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  .shift .name { font-weight: 600; display: block; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+  .shift .meta { opacity: 0.85; font-size: 9px; }
+  .shift.sling {
+    background: repeating-linear-gradient(
+      135deg,
+      var(--color),
+      var(--color) 5px,
+      color-mix(in srgb, var(--color), white 20%) 5px,
+      color-mix(in srgb, var(--color), white 20%) 10px
+    );
+    border-color: rgba(0,0,0,0.2);
+  }
+  table.summary {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 24px;
+    font-size: 13px;
+  }
+  table.summary th, table.summary td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--row-line);
+  }
+  table.summary th {
+    background: var(--header-bg);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  table.summary td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.summary td.delta-pos { color: #059669; font-weight: 600; }
+  table.summary td.delta-neg { color: #dc2626; font-weight: 600; }
+  table.summary td.delta-zero { color: var(--muted); }
+  table.summary .swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin: 8px 0 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    background: #94a3b8;
+  }
+  .legend-box.solid { background: #94a3b8; }
+  .legend-box.striped {
+    background: repeating-linear-gradient(
+      135deg, #94a3b8 0 5px, #cbd5e1 5px 10px
+    );
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Schedule Comparison — Week of 2026-05-25 (Mon–Sun)</h1>
+  <p>Top grid: <strong>Sling</strong> — what employees actually have scheduled. Bottom grid: <strong>Demo solver</strong> — what the algorithm produced ignoring Sling input. Static snapshot, generated 2026-05-24 06:36 UTC.</p>
+  <div class="stats">
+    <div>Baristas: <strong>13</strong></div>
+    <div>Sling shifts: <strong>25</strong> · <strong>172 h</strong></div>
+    <div>Demo shifts: <strong>59</strong> · <strong>362 h</strong></div>
+    <div>Hours delta: <strong>+190 h</strong></div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-box solid"></div> Solver-generated</div>
+    <div class="legend-item"><div class="legend-box striped"></div> Sling-imported (striped)</div>
+  </div>
+</header>
+
+<main>
+  <section class="week-block">
+    <h2>Sling (real schedule)</h2>
+    <div class="grid-wrap">
+      <div class="grid">
+        <div class="corner"></div>
+        <div class="day-header">Mon<span class="date">25 May</span></div><div class="day-header">Tue<span class="date">26 May</span></div><div class="day-header">Wed<span class="date">27 May</span></div><div class="day-header">Thu<span class="date">28 May</span></div><div class="day-header">Fri<span class="date">29 May</span></div><div class="day-header weekend">Sat<span class="date">30 May</span></div><div class="day-header weekend">Sun<span class="date">31 May</span></div>
+        <div></div>
+        <div style="grid-column: 1; display: flex; flex-direction: column;"><div class="hour-label">06:00</div><div class="hour-label">07:00</div><div class="hour-label">08:00</div><div class="hour-label">09:00</div><div class="hour-label">10:00</div><div class="hour-label">11:00</div><div class="hour-label">12:00</div><div class="hour-label">13:00</div><div class="hour-label">14:00</div><div class="hour-label">15:00</div><div class="hour-label">16:00</div><div class="hour-label">17:00</div><div class="hour-label">18:00</div><div class="hour-label">19:00</div><div class="hour-label">20:00</div><div class="hour-label">21:00</div></div><div class="day-col"><div class="shift sling" style="top:16.0px;height:382.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>06:20–14:20</span></div><div class="shift sling" style="top:336.0px;height:358.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">evening-main<br>13:00–20:30</span></div><div class="shift sling" style="top:336.0px;height:358.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Ivan Zalercev</span><span class="meta">evening-main<br>13:00–20:30</span></div></div><div class="day-col"><div class="shift sling" style="top:16.0px;height:310.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">morning-support<br>06:20–12:50</span></div><div class="shift sling" style="top:16.0px;height:382.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>06:20–14:20</span></div><div class="shift sling" style="top:360.0px;height:334.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Tomáš Hazucha</span><span class="meta">evening-main<br>13:30–20:30</span></div><div class="shift sling" style="top:432.0px;height:238.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Ivan Zalercev</span><span class="meta">evening-support<br>15:00–20:00</span></div></div><div class="day-col"><div class="shift sling" style="top:16.0px;height:382.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>06:20–14:20</span></div><div class="shift sling" style="top:264.0px;height:430.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Tomáš Hazucha</span><span class="meta">evening-main<br>11:30–20:30</span></div><div class="shift sling" style="top:456.0px;height:214.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Bratchikova</span><span class="meta">evening-support<br>15:30–20:00</span></div></div><div class="day-col"><div class="shift sling" style="top:16.0px;height:382.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>06:20–14:20</span></div><div class="shift sling" style="top:192.0px;height:334.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Ivan Zalercev</span><span class="meta">no role<br>10:00–17:00</span></div><div class="shift sling" style="top:336.0px;height:334.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">evening-main<br>13:00–20:00</span></div><div class="shift sling" style="top:528.0px;height:166.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">no role<br>17:00–20:30</span></div></div><div class="day-col"><div class="shift sling" style="top:16.0px;height:414.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>06:20–15:00</span></div><div class="shift sling" style="top:192.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">no role<br>10:00–16:00</span></div><div class="shift sling" style="top:288.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Tomáš Hazucha</span><span class="meta">no role<br>12:00–20:00</span></div><div class="shift sling" style="top:480.0px;height:214.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">no role<br>16:00–20:30</span></div></div><div class="day-col"><div class="shift sling" style="top:16.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Tomáš Hazucha</span><span class="meta">opener<br>06:20–14:20</span></div><div class="shift sling" style="top:96.0px;height:190.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Ivan Zalercev</span><span class="meta">morning-support<br>08:00–12:00</span></div><div class="shift sling" style="top:288.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">no role<br>12:00–20:00</span></div><div class="shift sling" style="top:408.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">no role<br>14:30–20:30</span></div></div><div class="day-col"><div class="shift sling" style="top:16.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Tomáš Hazucha</span><span class="meta">opener<br>06:20–14:20</span></div><div class="shift sling" style="top:192.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Ivan Zalercev</span><span class="meta">no role<br>10:00–18:00</span></div><div class="shift sling" style="top:384.0px;height:310.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">no role<br>14:00–20:30</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="week-block">
+    <h2>Demo solver (ignoring Sling)</h2>
+    <div class="grid-wrap">
+      <div class="grid">
+        <div class="corner"></div>
+        <div class="day-header">Mon<span class="date">25 May</span></div><div class="day-header">Tue<span class="date">26 May</span></div><div class="day-header">Wed<span class="date">27 May</span></div><div class="day-header">Thu<span class="date">28 May</span></div><div class="day-header">Fri<span class="date">29 May</span></div><div class="day-header weekend">Sat<span class="date">30 May</span></div><div class="day-header weekend">Sun<span class="date">31 May</span></div>
+        <div></div>
+        <div style="grid-column: 1; display: flex; flex-direction: column;"><div class="hour-label">06:00</div><div class="hour-label">07:00</div><div class="hour-label">08:00</div><div class="hour-label">09:00</div><div class="hour-label">10:00</div><div class="hour-label">11:00</div><div class="hour-label">12:00</div><div class="hour-label">13:00</div><div class="hour-label">14:00</div><div class="hour-label">15:00</div><div class="hour-label">16:00</div><div class="hour-label">17:00</div><div class="hour-label">18:00</div><div class="hour-label">19:00</div><div class="hour-label">20:00</div><div class="hour-label">21:00</div></div><div class="day-col"></div><div class="day-col"></div><div class="day-col"></div><div class="day-col"><div class="shift demo" style="top:24.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">opener<br>06:30–14:30</span></div><div class="shift demo" style="top:24.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">opener<br>06:30–14:30</span></div><div class="shift demo" style="top:24.0px;height:406.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">opener<br>06:30–15:00</span></div><div class="shift demo" style="top:24.0px;height:406.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>06:30–15:00</span></div><div class="shift demo" style="top:24.0px;height:406.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">opener<br>06:30–15:00</span></div><div class="shift demo" style="top:24.0px;height:406.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">opener<br>06:30–15:00</span></div><div class="shift demo" style="top:24.0px;height:406.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">opener<br>06:30–15:00</span></div><div class="shift demo" style="top:24.0px;height:406.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">opener<br>06:30–15:00</span></div><div class="shift demo" style="top:24.0px;height:430.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">opener<br>06:30–15:30</span></div><div class="shift demo" style="top:24.0px;height:430.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>06:30–15:30</span></div><div class="shift demo" style="top:24.0px;height:430.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">opener<br>06:30–15:30</span></div><div class="shift demo" style="top:48.0px;height:358.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">opener<br>07:00–14:30</span></div><div class="shift demo" style="top:48.0px;height:358.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">opener<br>07:00–14:30</span></div><div class="shift demo" style="top:48.0px;height:358.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">opener<br>07:00–14:30</span></div><div class="shift demo" style="top:48.0px;height:358.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">opener<br>07:00–14:30</span></div><div class="shift demo" style="top:48.0px;height:382.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">opener<br>07:00–15:00</span></div><div class="shift demo" style="top:48.0px;height:382.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>07:00–15:00</span></div><div class="shift demo" style="top:48.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">opener<br>07:00–15:00</span></div><div class="shift demo" style="top:48.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">opener<br>07:00–15:00</span></div><div class="shift demo" style="top:48.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">opener<br>07:00–15:00</span></div><div class="shift demo" style="top:48.0px;height:382.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">opener<br>07:00–15:00</span></div><div class="shift demo" style="top:48.0px;height:406.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">opener<br>07:00–15:30</span></div><div class="shift demo" style="top:48.0px;height:406.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">opener<br>07:00–15:30</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:190.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">morning-support<br>09:00–13:00</span></div><div class="shift demo" style="top:192.0px;height:190.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">morning-support<br>10:00–14:00</span></div><div class="shift demo" style="top:192.0px;height:190.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">morning-support<br>10:00–14:00</span></div><div class="shift demo" style="top:192.0px;height:190.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">morning-support<br>10:00–14:00</span></div><div class="shift demo" style="top:192.0px;height:190.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">morning-support<br>10:00–14:00</span></div><div class="shift demo" style="top:192.0px;height:190.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">morning-support<br>10:00–14:00</span></div><div class="shift demo" style="top:336.0px;height:286.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">evening-main<br>13:00–19:00</span></div><div class="shift demo" style="top:336.0px;height:286.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">evening-main<br>13:00–19:00</span></div><div class="shift demo" style="top:336.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">evening-main<br>13:00–19:00</span></div><div class="shift demo" style="top:336.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">evening-main<br>13:00–19:00</span></div><div class="shift demo" style="top:336.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">evening-main<br>13:00–19:00</span></div><div class="shift demo" style="top:336.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">evening-main<br>13:00–19:00</span></div></div><div class="day-col"><div class="shift demo" style="top:96.0px;height:238.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">morning-support<br>08:00–13:00</span></div><div class="shift demo" style="top:96.0px;height:238.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">morning-support<br>08:00–13:00</span></div><div class="shift demo" style="top:96.0px;height:238.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">morning-support<br>08:00–13:00</span></div><div class="shift demo" style="top:96.0px;height:238.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">morning-support<br>08:00–13:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Daiana Prokop</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Vrez Gevorgian</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:96.0px;height:286.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Anna Adekeye</span><span class="meta">morning-support<br>08:00–14:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#ec4899;--color:#ec4899;"><span class="name">Diana Smolii</span><span class="meta">morning-support<br>09:00–12:00</span></div><div class="shift demo" style="top:144.0px;height:142.0px;background-color:#9333ea;--color:#9333ea;"><span class="name">Mari Z</span><span class="meta">morning-support<br>09:00–12:00</span></div></div><div class="day-col"><div class="shift demo" style="top:360.0px;height:286.0px;background-color:#14b8a6;--color:#14b8a6;"><span class="name">Akežan Yelubay</span><span class="meta">evening-main<br>13:30–19:30</span></div></div><div class="day-col"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin: 0 0 8px; font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">Per-barista hours</h2>
+    <table class="summary">
+      <thead>
+        <tr>
+          <th>Barista</th>
+          <th>Contract</th>
+          <th class="num">Target / Max</th>
+          <th class="num">Sling h</th>
+          <th class="num">Demo h</th>
+          <th class="num">Δ</th>
+        </tr>
+      </thead>
+      <tbody>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Mari Z</td><td>DPP</td><td class="num">30 / 40</td><td class="num">0.0</td><td class="num">66.0</td><td class="num delta-pos">+66.0</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Anna Adekeye</td><td>DPP</td><td class="num">30 / 40</td><td class="num">35.0</td><td class="num">62.0</td><td class="num delta-pos">+27.0</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Vrez Gevorgian</td><td>DPP</td><td class="num">30 / 40</td><td class="num">20.5</td><td class="num">62.0</td><td class="num delta-pos">+41.5</td></tr>
+<tr><td><span class="swatch" style="background:#14b8a6"></span>Akežan Yelubay</td><td>HPP</td><td class="num">30 / 40</td><td class="num">0.0</td><td class="num">62.0</td><td class="num delta-pos">+62.0</td></tr>
+<tr><td><span class="swatch" style="background:#ec4899"></span>Diana Smolii</td><td>HPP</td><td class="num">30 / 40</td><td class="num">40.7</td><td class="num">56.0</td><td class="num delta-pos">+15.3</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Daiana Prokop</td><td>DPP</td><td class="num">30 / 40</td><td class="num">0.0</td><td class="num">54.0</td><td class="num delta-pos">+54.0</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Tomáš Hazucha</td><td>DPP</td><td class="num">30 / 40</td><td class="num">40.0</td><td class="num">0.0</td><td class="num delta-neg">-40.0</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Ivan Zalercev</td><td>DPP</td><td class="num">30 / 40</td><td class="num">31.5</td><td class="num">0.0</td><td class="num delta-neg">-31.5</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Anna Bratchikova</td><td>DPP</td><td class="num">30 / 40</td><td class="num">4.5</td><td class="num">0.0</td><td class="num delta-neg">-4.5</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Alex Baker</td><td>DPP</td><td class="num">30 / 40</td><td class="num">0.0</td><td class="num">0.0</td><td class="num delta-zero">—</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Barbora Hrubcová</td><td>DPP</td><td class="num">30 / 40</td><td class="num">0.0</td><td class="num">0.0</td><td class="num delta-zero">—</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Liza Sopova</td><td>DPP</td><td class="num">30 / 40</td><td class="num">0.0</td><td class="num">0.0</td><td class="num delta-zero">—</td></tr>
+<tr><td><span class="swatch" style="background:#9333ea"></span>Marketa Zaoralova</td><td>DPP</td><td class="num">30 / 40</td><td class="num">0.0</td><td class="num">0.0</td><td class="num delta-zero">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+</body>
+</html>
