@@ -257,7 +257,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       <div class="grid">
         <div class="corner"></div>
         {day_headers}
-        <div></div>
         {sling_grid}
       </div>
     </div>
