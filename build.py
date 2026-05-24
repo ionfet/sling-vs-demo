@@ -156,8 +156,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   }}
   .shift {{
     position: absolute;
-    left: 2px;
-    right: 2px;
     border-radius: 4px;
     padding: 3px 5px;
     font-size: 10px;
@@ -298,6 +296,62 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
+def assign_lanes(day_shifts):
+    """Given shifts for one day, assign each a lane index and cluster_width.
+
+    Algorithm:
+    1. Sort by start_min asc, then end_min asc.
+    2. Walk sorted shifts building overlap clusters: a new cluster starts when
+       the current shift starts at or after the cluster's max end so far.
+    3. Within each cluster, greedy lane assignment: pick the leftmost lane whose
+       last-end <= this shift's start; otherwise open a new lane.
+    Returns a list of dicts with the original shift data plus 'lane' and
+    'cluster_width' keys.
+    """
+    if not day_shifts:
+        return []
+    sorted_shifts = sorted(day_shifts, key=lambda s: (s["start_min"], s["start_min"] + s["duration_min"]))
+    # Build clusters
+    clusters = []
+    cur_cluster = []
+    cluster_max_end = -1
+    for s in sorted_shifts:
+        end = s["start_min"] + s["duration_min"]
+        if s["start_min"] >= cluster_max_end:
+            # Start a new cluster
+            if cur_cluster:
+                clusters.append(cur_cluster)
+            cur_cluster = [s]
+            cluster_max_end = end
+        else:
+            cur_cluster.append(s)
+            cluster_max_end = max(cluster_max_end, end)
+    if cur_cluster:
+        clusters.append(cur_cluster)
+
+    result = []
+    for cluster in clusters:
+        # Greedy lane assignment
+        lane_ends = []  # lane_ends[i] = end_min of last shift placed in lane i
+        annotated = []
+        for s in cluster:
+            end = s["start_min"] + s["duration_min"]
+            placed = False
+            for i, le in enumerate(lane_ends):
+                if s["start_min"] >= le:
+                    lane_ends[i] = end
+                    annotated.append((s, i))
+                    placed = True
+                    break
+            if not placed:
+                annotated.append((s, len(lane_ends)))
+                lane_ends.append(end)
+        w = len(lane_ends)
+        for s, lane in annotated:
+            result.append({**s, "lane": lane, "cluster_width": w})
+    return result
+
+
 def shift_block_html(s, profile_map, source):
     """Render one shift as a positioned absolute div inside its day column."""
     p = profile_map.get(s["sling_user_id"])
@@ -311,15 +365,26 @@ def shift_block_html(s, profile_map, source):
     start_label = f"{s['start_min']//60:02d}:{s['start_min']%60:02d}"
     end_min = s["start_min"] + s["duration_min"]
     end_label = f"{end_min//60:02d}:{end_min%60:02d}"
+    lane = s.get("lane", 0)
+    w = s.get("cluster_width", 1)
+    # Lane-aware positioning: divide column width evenly with small gutters.
+    # left = 2px gutter + lane fraction of (100% - 4px total horizontal gutter)
+    # width = one lane's share minus 1px inter-lane gap
+    left_css = f"calc((100% - 4px) * {lane} / {w} + 2px)"
+    width_css = f"calc((100% - 4px) / {w} - 1px)"
     return (
-        f'<div class="shift {source}" style="top:{top:.1f}px;height:{height:.1f}px;background-color:{color};--color:{color};">'
+        f'<div class="shift {source}" style="top:{top:.1f}px;height:{height:.1f}px;'
+        f'left:{left_css};width:{width_css};'
+        f'background-color:{color};--color:{color};">'
         f'<span class="name">{name}</span>'
         f'<span class="meta">{role}<br>{start_label}–{end_label}</span>'
         f'</div>'
     )
 
 def day_col_html(weekday, shifts, profile_map, source):
-    blocks = [shift_block_html(s, profile_map, source) for s in shifts if s["weekday"] == weekday]
+    day_shifts = [s for s in shifts if s["weekday"] == weekday]
+    lane_shifts = assign_lanes(day_shifts)
+    blocks = [shift_block_html(s, profile_map, source) for s in lane_shifts]
     return f'<div class="day-col">{"".join(blocks)}</div>'
 
 def grid_html(shifts, profile_map, source):
